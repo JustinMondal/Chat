@@ -1,8 +1,10 @@
 //
-//  Recorder.swift
-//  
+// Recorder.swift (FIXED for voice recording)
+// Replace Sources/ExyteChat/Views/Recording/Recorder.swift in your fork:
+// https://github.com/JustinMondal/Chat
 //
-//  Created by Alisa Mylnikova on 09.03.2023.
+// Fixes: (1) AVEncoderBitRateKey must be bits/sec (128000 for AAC), not 128.
+//        (2) Do not pass PCM-only keys when format is AAC — causes no audio.
 //
 
 import Foundation
@@ -43,28 +45,38 @@ final actor Recorder {
             return startRecordingInternal(durationProgressHandler)
         }
     }
-    
+
     private func startRecordingInternal(_ durationProgressHandler: @escaping ProgressHandler) -> URL? {
-        let settings: [String : Any] = [
-            AVFormatIDKey: Int(recorderSettings.audioFormatID),
+        let formatID = recorderSettings.audioFormatID
+
+        // Only include format-appropriate keys. PCM keys are invalid for AAC and can cause no audio.
+        var settings: [String: Any] = [
+            AVFormatIDKey: Int(formatID),
             AVSampleRateKey: recorderSettings.sampleRate,
             AVNumberOfChannelsKey: recorderSettings.numberOfChannels,
-            AVEncoderBitRateKey: recorderSettings.encoderBitRateKey,
-            AVLinearPCMBitDepthKey: recorderSettings.linearPCMBitDepth,
-            AVLinearPCMIsFloatKey: recorderSettings.linearPCMIsFloatKey,
-            AVLinearPCMIsBigEndianKey: recorderSettings.linearPCMIsBigEndianKey,
-            AVLinearPCMIsNonInterleaved: recorderSettings.linearPCMIsNonInterleaved,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
 
+        if formatID == kAudioFormatLinearPCM {
+            settings[AVLinearPCMBitDepthKey] = recorderSettings.linearPCMBitDepth
+            settings[AVLinearPCMIsFloatKey] = recorderSettings.linearPCMIsFloatKey
+            settings[AVLinearPCMIsBigEndianKey] = recorderSettings.linearPCMIsBigEndianKey
+            settings[AVLinearPCMIsNonInterleaved] = recorderSettings.linearPCMIsNonInterleaved
+        } else {
+            // AAC and other encoded formats: bit rate in bits per second (e.g. 128000), not 128.
+            let bitRate = recorderSettings.encoderBitRateKey
+            let bitsPerSecond = (bitRate <= 0 || bitRate > 1_000_000) ? 128_000 : (bitRate < 1000 ? bitRate * 1000 : bitRate)
+            settings[AVEncoderBitRateKey] = bitsPerSecond
+        }
+
         soundSamples = []
-        guard let fileExt = fileExtension(for: recorderSettings.audioFormatID) else{
+        guard let fileExt = fileExtension(for: formatID) else {
             return nil
         }
         let recordingUrl = FileManager.tempDirPath.appendingPathComponent(UUID().uuidString + fileExt)
 
         do {
-            try audioSession.setCategory(.record, mode: .default)
+            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
             try audioSession.setActive(true)
             audioRecorder = try AVAudioRecorder(url: recordingUrl, settings: settings)
             audioRecorder?.isMeteringEnabled = true
@@ -110,7 +122,7 @@ final actor Recorder {
     private func fileExtension(for formatID: AudioFormatID) -> String? {
         switch formatID {
         case kAudioFormatMPEG4AAC:
-            return ".aac"
+            return ".m4a"
         case kAudioFormatLinearPCM:
             return ".wav"
         case kAudioFormatMPEGLayer3:
@@ -143,10 +155,11 @@ final actor Recorder {
     }
 }
 
-public struct RecorderSettings : Codable,Hashable {
+public struct RecorderSettings: Codable, Hashable {
     var audioFormatID: AudioFormatID
     var sampleRate: CGFloat
     var numberOfChannels: Int
+    /// For AAC: pass 128 for 128 kbps (stored as 128000 internally). For PCM, unused.
     var encoderBitRateKey: Int
     // pcm
     var linearPCMBitDepth: Int
@@ -155,7 +168,7 @@ public struct RecorderSettings : Codable,Hashable {
     var linearPCMIsNonInterleaved: Bool
 
     public init(audioFormatID: AudioFormatID = kAudioFormatMPEG4AAC,
-                sampleRate: CGFloat = 12000,
+                sampleRate: CGFloat = 44100,
                 numberOfChannels: Int = 1,
                 encoderBitRateKey: Int = 128,
                 linearPCMBitDepth: Int = 16,
