@@ -146,8 +146,10 @@ final class InputViewModel: ObservableObject {
             attachments.recording = Recording()
             let url = await recorder.startRecording { duration, samples in
                 DispatchQueue.main.async { [weak self] in
-                    self?.attachments.recording?.duration = duration
-                    self?.attachments.recording?.waveformSamples = samples
+                    guard let self = self else { return }
+                    self.attachments.recording?.duration = duration
+                    self.attachments.recording?.waveformSamples = samples
+                    self.attachments = self.attachments  // trigger @Published so UI (timer, waveform) updates
                 }
             }
             if state == .waitingForRecordingPermission {
