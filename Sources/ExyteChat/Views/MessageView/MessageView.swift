@@ -32,9 +32,12 @@ struct MessageView: View {
     @State var timeSize: CGSize = .zero
     @State var messageSize: CGSize = .zero
 
-    // The size of our reaction bubbles are based on the users font size,
-    // Therefore we need to capture it's rendered size in order to place it correctly
-    @State var bubbleSize: CGSize = .zero
+   // The size of our reaction bubbles are based on the users font size,
+   // therefore we capture its rendered size to place it correctly.
+   // Use a non-zero default so the gap above the reaction row is reserved from frame 1;
+   // otherwise spacing is only applied after sizeGetter runs, causing scroll jitter.
+   private static let defaultReactionBubbleSize = CGSize(width: 32, height: 32)
+   @State var bubbleSize: CGSize = defaultReactionBubbleSize
 
     static let widthWithMedia: CGFloat = 204
     static let horizontalScreenEdgePadding: CGFloat = 12
