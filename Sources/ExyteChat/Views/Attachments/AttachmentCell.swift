@@ -3,6 +3,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 public struct AttachmentCell: View {
 
@@ -177,6 +178,10 @@ public struct AttachmentCell: View {
     }
 }
 
+private func isGifURL(_ url: URL) -> Bool {
+    url.pathExtension.lowercased() == "gif" || url.absoluteString.lowercased().contains(".gif")
+}
+
 struct AsyncImageView: View {
 
     @Environment(\.chatTheme) var theme
@@ -185,21 +190,37 @@ struct AsyncImageView: View {
     let size: CGSize
 
     var body: some View {
-        CachedAsyncImage(
-            url: attachment.thumbnail,
-            cacheKey: attachment.thumbnailCacheKey
-        ) { imageView in
-            imageView
+        if attachment.type == .image, isGifURL(attachment.thumbnail) {
+            KFAnimatedImage(attachment.thumbnail)
+                .placeholder {
+                    ZStack {
+                        Rectangle()
+                            .foregroundColor(theme.colors.inputBG)
+                            .frame(width: size.width, height: size.height)
+                        ActivityIndicator(size: 30, showBackground: false)
+                    }
+                }
                 .resizable()
                 .scaledToFill()
                 .frame(width: size.width, height: size.height)
                 .clipped()
-        } placeholder: {
-            ZStack {
-                Rectangle()
-                    .foregroundColor(theme.colors.inputBG)
+        } else {
+            CachedAsyncImage(
+                url: attachment.thumbnail,
+                cacheKey: attachment.thumbnailCacheKey
+            ) { imageView in
+                imageView
+                    .resizable()
+                    .scaledToFill()
                     .frame(width: size.width, height: size.height)
-                ActivityIndicator(size: 30, showBackground: false)
+                    .clipped()
+            } placeholder: {
+                ZStack {
+                    Rectangle()
+                        .foregroundColor(theme.colors.inputBG)
+                        .frame(width: size.width, height: size.height)
+                    ActivityIndicator(size: 30, showBackground: false)
+                }
             }
         }
     }
