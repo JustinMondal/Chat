@@ -401,7 +401,7 @@ struct InputView: View {
             onAction(.stopRecordAudio)
         } label: {
             theme.images.recordAudio.stopRecord
-                .viewSize(28)
+                .viewSize(36)
                 .background(
                     Capsule()
                         .fill(Color.white)
@@ -537,8 +537,9 @@ struct InputView: View {
     private var recordingOverlayYOffset: CGFloat {
         let gap: CGFloat = 8
         if state == .isRecordingTap {
-            // Stop button only (~28pt)
-            return -(28 + gap)
+            let stopHeight: CGFloat = 36
+            let extraSpace: CGFloat = 16
+            return -(stopHeight + gap + extraSpace)
         }
         // Lock + send stack (~100pt). Use measured height when available; otherwise fallback so it clears the mic.
         let stackHeight = overlaySize.height > 0 ? overlaySize.height : 100
