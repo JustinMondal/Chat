@@ -146,7 +146,7 @@ struct AttachmentsEditor<InputViewContent: View>: View {
             } else {
                 InputView(
                     viewModel: inputViewModel,
-                    inputFieldId: signatureInputId
+                    inputFieldId: signatureInputId,
                     style: .signature,
                     availableInputs: availableInputs,
                     messageStyler: messageStyler,
