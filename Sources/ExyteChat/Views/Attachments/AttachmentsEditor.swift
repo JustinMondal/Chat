@@ -16,6 +16,7 @@ struct AttachmentsEditor<InputViewContent: View>: View {
     @Environment(\.chatTheme) var theme
     @Environment(\.mediaPickerTheme) var mediaPickerTheme
     @Environment(\.mediaPickerThemeIsOverridden) var mediaPickerThemeIsOverridden
+    @Environment(\.dismiss) private var dismiss
 
     @EnvironmentObject private var keyboardState: KeyboardState
     @EnvironmentObject private var globalFocusState: GlobalFocusState
@@ -71,13 +72,14 @@ struct AttachmentsEditor<InputViewContent: View>: View {
                 }
                 .background(mediaPickerTheme.main.pickerBackground.ignoresSafeArea())
             } cameraSelectionBuilder: { _, cancelClosure, cameraSelectionView in
-                VStack {
-                    cameraSelectionView
-                        .overlay(alignment: .top) {
-                            cameraSelectionHeaderView(cancelClosure: cancelClosure)
-                                .padding(.top, 12)
-                        }
+                VStack(spacing: 0) {
+                    cameraSelectionHeaderView(cancelClosure: cancelClosure)
                         .padding(.top, g.safeAreaInsets.top)
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
+                        .background(mediaPickerTheme.main.pickerBackground)
+                        .zIndex(1)
+                    cameraSelectionView
                     Spacer()
                     inputView
                         .padding(.bottom, g.safeAreaInsets.bottom)
@@ -189,16 +191,15 @@ struct AttachmentsEditor<InputViewContent: View>: View {
     func cameraSelectionHeaderView(cancelClosure: @escaping ()->()) -> some View {
         HStack {
             Button {
-                inputViewModel.showPicker = false
-                cancelClosure()
+                closeCameraSelectionAndDismiss()
             } label: {
                 theme.images.mediaPicker.cross
                     .imageScale(.large)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .contentShape(Rectangle())
             .tint(mediaPickerTheme.main.pickerText)
-            .padding(.trailing, 30)
 
             if let chatTitle = chatTitle {
                 theme.images.mediaPicker.chevronRight
@@ -209,6 +210,15 @@ struct AttachmentsEditor<InputViewContent: View>: View {
 
             Spacer()
         }
-        .padding(.horizontal)
+    }
+
+    /// Close the review screen, clear captured photos, and dismiss the sheet (same as Cancel intent).
+    private func closeCameraSelectionAndDismiss() {
+        seleсtedMedias = []
+        currentFullscreenMedia = nil
+        inputViewModel.attachments.medias = []
+        inputViewModel.mediaPickerMode = .photos
+        inputViewModel.showPicker = false
+        dismiss()
     }
 }
