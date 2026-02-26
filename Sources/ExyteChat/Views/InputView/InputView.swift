@@ -262,7 +262,7 @@ struct InputView: View {
                     }
                     .sizeGetter($overlaySize)
                     // hardcode 28 for now because sizeGetter returns 0 somehow
-                    .offset(y: (state == .isRecordingTap ? -28 : -overlaySize.height) - 24)
+                    .offset(y: recordingOverlayYOffset)
                 }
             }
             .viewSize(48)
@@ -531,6 +531,18 @@ struct InputView: View {
         case .signature:
             return pickerTheme.main.pickerBackground
         }
+    }
+
+    /// Offset so the lock/send overlay sits above the 48pt mic button. When sizeGetter returns 0, use a fallback so the ~100pt stack doesn't overlap.
+    private var recordingOverlayYOffset: CGFloat {
+        let gap: CGFloat = 8
+        if state == .isRecordingTap {
+            // Stop button only (~28pt)
+            return -(28 + gap)
+        }
+        // Lock + send stack (~100pt). Use measured height when available; otherwise fallback so it clears the mic.
+        let stackHeight = overlaySize.height > 0 ? overlaySize.height : 100
+        return -(stackHeight + gap)
     }
 
     func dragGesture() -> some Gesture {
