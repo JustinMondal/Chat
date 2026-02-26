@@ -3,6 +3,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct AttachmentsPage: View {
 
@@ -13,17 +14,26 @@ struct AttachmentsPage: View {
 
     var body: some View {
         if attachment.type == .image {
-            CachedAsyncImage(
-                url: attachment.full,
-                cacheKey: attachment.fullCacheKey
-            ) { phase in
-                switch phase {
-                case let .success(image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                default:
-                    ActivityIndicator()
+            if isGifURL(attachment.full) {
+                KFAnimatedImage(attachment.full)
+                    .placeholder {
+                        ActivityIndicator()
+                    }
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                CachedAsyncImage(
+                    url: attachment.full,
+                    cacheKey: attachment.fullCacheKey
+                ) { phase in
+                    switch phase {
+                    case let .success(image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    default:
+                        ActivityIndicator()
+                    }
                 }
             }
         } else if attachment.type == .video {
@@ -37,5 +47,9 @@ struct AttachmentsPage: View {
                     Text("Unknown", bundle: .module)
                 }
         }
+    }
+
+    private func isGifURL(_ url: URL) -> Bool {
+        url.pathExtension.lowercased() == "gif" || url.absoluteString.lowercased().contains(".gif")
     }
 }
