@@ -10,9 +10,9 @@ import ExyteMediaPicker
 import ActivityIndicatorView
 
 struct AttachmentsEditor<InputViewContent: View>: View {
-    
+
     typealias InputViewBuilderClosure = ChatView<EmptyView, InputViewContent, DefaultMessageMenuAction>.InputViewBuilderClosure
-    
+
     @Environment(\.chatTheme) var theme
     @Environment(\.mediaPickerTheme) var mediaPickerTheme
     @Environment(\.mediaPickerThemeIsOverridden) var mediaPickerThemeIsOverridden
@@ -188,10 +188,15 @@ struct AttachmentsEditor<InputViewContent: View>: View {
 
     func cameraSelectionHeaderView(cancelClosure: @escaping ()->()) -> some View {
         HStack {
-            Button(action: cancelClosure) {
+            Button {
+                inputViewModel.showPicker = false
+                cancelClosure()
+            } label: {
                 theme.images.mediaPicker.cross
                     .imageScale(.large)
             }
+            .buttonStyle(.plain)
+            .contentShape(Rectangle())
             .tint(mediaPickerTheme.main.pickerText)
             .padding(.trailing, 30)
 
