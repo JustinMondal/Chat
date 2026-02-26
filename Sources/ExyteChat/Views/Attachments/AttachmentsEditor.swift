@@ -31,6 +31,12 @@ struct AttachmentsEditor<InputViewContent: View>: View {
     var availableInputs: [AvailableInputType]
     var localization: ChatLocalization
 
+    private static var photoOnlySelectionParameters: MediaPickerSelectionParameters {
+        let params = MediaPickerSelectionParameters()
+        params.mediaType = .photo
+        return params
+    }
+
     @State private var seleсtedMedias: [Media] = []
     @State private var currentFullscreenMedia: Media?
 
@@ -81,7 +87,7 @@ struct AttachmentsEditor<InputViewContent: View>: View {
                 inputViewModel.showPicker = false
             }
             .currentFullscreenMedia($currentFullscreenMedia)
-            .setSelectionParameters(mediaPickerSelectionParameters)
+            .setSelectionParameters(mediaPickerSelectionParameters ?? Self.photoOnlySelectionParameters)
             .setMediaPickerParameters(mediaPickerParameters)
             .pickerMode($inputViewModel.mediaPickerMode)
             .orientationHandler(orientationHandler)
