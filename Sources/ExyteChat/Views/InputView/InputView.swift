@@ -573,25 +573,31 @@ struct InputView: View {
                 }
             }
             .onEnded() { value in
-                if !cancelGesture {
-                    tapDelayTimer = nil
-                    if recordButtonFrame.contains(value.location) {
-                        if let dragStart = dragStart, Date().timeIntervalSince(dragStart) < tapDelay {
-                            onAction(.recordAudioTap)
-                        } else if state != .waitingForRecordingPermission {
-                            onAction(.send)
-                        }
-                    }
-                    else if lockRecordFrame.contains(value.location) {
-                        onAction(.recordAudioLock)
-                    }
-                    else if deleteRecordFrame.contains(value.location) {
-                        onAction(.deleteRecord)
-                    } else {
+                tapDelayTimer?.invalidate()
+                tapDelayTimer = nil
+                defer { dragStart = nil }
+                
+                guard !cancelGesture else { return }
+                
+                let duration = dragStart.map { Date().timeIntervalSince($0) } ?? 1
+                let isShortPress = duration < tapDelay
+                let isSmallDrag = abs(value.translation.width) < 20 && abs(value.translation.height) < 20
+                
+                if recordButtonFrame.contains(value.location) {
+                    if isShortPress && isSmallDrag {
+                        onAction(.recordAudioTap)
+                    } else if state != .waitingForRecordingPermission {
                         onAction(.send)
                     }
+                } else if lockRecordFrame.contains(value.location) {
+                    onAction(.recordAudioLock)
+                } else if deleteRecordFrame.contains(value.location) {
+                    onAction(.deleteRecord)
+                } else if isShortPress && isSmallDrag {
+                    onAction(.recordAudioTap)
+                } else {
+                    onAction(.send)
                 }
-                dragStart = nil
             }
     }
     
