@@ -16,11 +16,11 @@ struct AttachmentsPage: View {
         if attachment.type == .image {
             if isGifURL(attachment.full) {
                 KFAnimatedImage(attachment.full)
+                    .configure { $0.contentMode = .scaleAspectFit }
                     .placeholder {
                         ActivityIndicator()
                     }
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 CachedAsyncImage(
                     url: attachment.full,
