@@ -39,6 +39,7 @@ struct AttachmentsEditor<InputViewContent: View>: View {
 
     @State private var seleсtedMedias: [Media] = []
     @State private var currentFullscreenMedia: Media?
+    @State private var signatureInputId = UUID()
 
     var showingAlbums: Bool {
         inputViewModel.mediaPickerMode == .albums
@@ -141,11 +142,11 @@ struct AttachmentsEditor<InputViewContent: View>: View {
                 ) {
                     globalFocusState.focus = nil
                 }
-                .customFocus($globalFocusState.focus, equals: .uuid(UUID()))
+                .customFocus($globalFocusState.focus, equals: .uuid(signatureInputId))
             } else {
                 InputView(
                     viewModel: inputViewModel,
-                    inputFieldId: UUID(),
+                    inputFieldId: signatureInputId
                     style: .signature,
                     availableInputs: availableInputs,
                     messageStyler: messageStyler,
