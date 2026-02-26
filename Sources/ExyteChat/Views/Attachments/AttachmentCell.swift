@@ -192,6 +192,7 @@ struct AsyncImageView: View {
     var body: some View {
         if attachment.type == .image, isGifURL(attachment.thumbnail) {
             KFAnimatedImage(attachment.thumbnail)
+                .configure { $0.contentMode = .scaleAspectFill }
                 .placeholder {
                     ZStack {
                         Rectangle()
@@ -200,8 +201,6 @@ struct AsyncImageView: View {
                         ActivityIndicator(size: 30, showBackground: false)
                     }
                 }
-                .resizable()
-                .scaledToFill()
                 .frame(width: size.width, height: size.height)
                 .clipped()
         } else {
